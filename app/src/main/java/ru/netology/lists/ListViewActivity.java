@@ -1,6 +1,10 @@
 package ru.netology.lists;
 
+
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -8,6 +12,7 @@ import android.widget.SimpleAdapter;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,8 +21,13 @@ import java.util.Map;
 
 public class ListViewActivity extends AppCompatActivity {
 
+
     public static final String ATTRIBUTE_NAME_TITLE = "title";
     public static final String ATTRIBUTE_NAME_SUBTITLE = "subtitle";
+
+
+    List<Map<String, String>> simpleAdapterContent = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,30 +38,77 @@ public class ListViewActivity extends AppCompatActivity {
 
         ListView list = findViewById(R.id.list);
 
-        List<Map<String,String>> values = prepareContent();
+        prepareContent();
 
-        BaseAdapter listContentAdapter = createAdapter(values);
+        final BaseAdapter listContentAdapter = createAdapter(simpleAdapterContent);
 
         list.setAdapter(listContentAdapter);
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int positions, long id) {
+                simpleAdapterContent.remove(positions);
+                listContentAdapter.notifyDataSetChanged();
+            }
+        });
+
+        final SwipeRefreshLayout refreshLayout = findViewById(R.id.swipe);
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                simpleAdapterContent.clear();
+                prepareContent();
+                listContentAdapter.notifyDataSetChanged();
+                refreshLayout.setRefreshing(false);
+            }
+        });
     }
 
     @NonNull
-    private BaseAdapter createAdapter( List<Map<String,String>> values) {
+    private BaseAdapter createAdapter(List<Map<String, String>> values) {
         String[] from = {ATTRIBUTE_NAME_TITLE, ATTRIBUTE_NAME_SUBTITLE};
         int[] to = {R.id.tv_title, R.id.tv_subtitle};
         return new SimpleAdapter(this, values, R.layout.list_item, from, to);
     }
 
-    @NonNull
-    private List<Map<String, String>> prepareContent() {
-        String[] strings = getString(R.string.large_text).split("\n\n");
-        List<Map<String,String>> list = new ArrayList<>();
-        for (String str : strings){
+
+    private void prepareContent() {
+        try {
+            prepareContentFromRefs();
+        } catch (Exception e) {
+            e.printStackTrace();
+            prepareContentFromAssets();
+            SharedPreferences preferences = getSharedPreferences("values", MODE_PRIVATE);
+            preferences.edit().putString("values", getString(R.string.large_text)).apply();
+        }
+    }
+
+
+    private void prepareContentFromRefs() throws Exception {
+        SharedPreferences preferences = getSharedPreferences("values", MODE_PRIVATE);
+        String savedStr = preferences.getString("values", "");
+
+        String[] strings;
+        if (!savedStr.isEmpty()) {
+            strings = savedStr.split("\n\n");
+        } else {
+            throw new Exception("SharedPreferences has no values");
+        }
+
+        for (String str : strings) {
             Map<String, String> map = new HashMap<>();
             map.put(ATTRIBUTE_NAME_TITLE, str.length() + "");
             map.put(ATTRIBUTE_NAME_SUBTITLE, str);
-            list.add(map);
+            simpleAdapterContent.add(map);
         }
-        return list;
+    }
+
+    private void prepareContentFromAssets() {
+        String[] strings = getString(R.string.large_text).split("\n\n");
+        for (String str : strings) {
+            Map<String, String> map = new HashMap<>();
+            map.put(ATTRIBUTE_NAME_TITLE, str.length() + "");
+            map.put(ATTRIBUTE_NAME_SUBTITLE, str);
+            simpleAdapterContent.add(map);
+        }
     }
 }
