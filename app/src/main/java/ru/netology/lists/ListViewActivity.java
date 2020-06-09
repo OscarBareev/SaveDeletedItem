@@ -22,8 +22,10 @@ import java.util.Map;
 public class ListViewActivity extends AppCompatActivity {
 
 
-    public static final String ATTRIBUTE_NAME_TITLE = "title";
-    public static final String ATTRIBUTE_NAME_SUBTITLE = "subtitle";
+    private static final String ATTRIBUTE_NAME_TITLE = "title";
+    private static final String ATTRIBUTE_NAME_SUBTITLE = "subtitle";
+    private static final String PREF_NAME = "prefValues";
+    private static final String PREF_KEY = "keyValues";
 
 
     List<Map<String, String>> simpleAdapterContent = new ArrayList<>();
@@ -77,15 +79,15 @@ public class ListViewActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
             prepareContentFromAssets();
-            SharedPreferences preferences = getSharedPreferences("values", MODE_PRIVATE);
-            preferences.edit().putString("values", getString(R.string.large_text)).apply();
+            SharedPreferences preferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+            preferences.edit().putString(PREF_KEY, getString(R.string.large_text)).apply();
         }
     }
 
 
     private void prepareContentFromRefs() throws Exception {
-        SharedPreferences preferences = getSharedPreferences("values", MODE_PRIVATE);
-        String savedStr = preferences.getString("values", "");
+        SharedPreferences preferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+        String savedStr = preferences.getString(PREF_KEY, "");
 
         String[] strings;
         if (!savedStr.isEmpty()) {
