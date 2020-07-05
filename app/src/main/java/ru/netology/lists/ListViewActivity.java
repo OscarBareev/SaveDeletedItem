@@ -26,6 +26,11 @@ public class ListViewActivity extends AppCompatActivity {
     private static final String ATTRIBUTE_NAME_SUBTITLE = "subtitle";
     private static final String PREF_NAME = "prefValues";
     private static final String PREF_KEY = "keyValues";
+    private static final String BUNDLE_KEY = "bundleValues";
+
+    BaseAdapter listContentAdapter;
+
+    ArrayList<Integer> deletedItems = new ArrayList<>();
 
 
     List<Map<String, String>> simpleAdapterContent = new ArrayList<>();
@@ -42,7 +47,7 @@ public class ListViewActivity extends AppCompatActivity {
 
         prepareContent();
 
-        final BaseAdapter listContentAdapter = createAdapter(simpleAdapterContent);
+        listContentAdapter = createAdapter(simpleAdapterContent);
 
         list.setAdapter(listContentAdapter);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -50,6 +55,7 @@ public class ListViewActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int positions, long id) {
                 simpleAdapterContent.remove(positions);
                 listContentAdapter.notifyDataSetChanged();
+                deletedItems.add(positions);
             }
         });
 
@@ -72,6 +78,28 @@ public class ListViewActivity extends AppCompatActivity {
         return new SimpleAdapter(this, values, R.layout.list_item, from, to);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putIntegerArrayList(BUNDLE_KEY, deletedItems);
+
+
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        deletedItems = savedInstanceState.getIntegerArrayList(BUNDLE_KEY);
+
+        for (Integer deletedItem : deletedItems) {
+            simpleAdapterContent.remove(deletedItem.intValue());
+            listContentAdapter.notifyDataSetChanged();
+        }
+
+
+    }
 
     private void prepareContent() {
         try {
